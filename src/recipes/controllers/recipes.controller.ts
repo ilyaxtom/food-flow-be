@@ -10,46 +10,47 @@ import {
   Put,
 } from "@nestjs/common";
 import { RecipesService } from "recipes/services/recipes.service";
-import { CreateRecipeDto } from "recipes/dtos/CreateRecipe.dto";
-import { UpdateRecipeDto } from "recipes/dtos/UpdateRecipe.dto";
+import { CreateRecipeDto } from "recipes/dto/create-recipe.dto";
+import { UpdateRecipeDto } from "recipes/dto/update-recipe.dto";
+import { PatchRecipeDto } from "recipes/dto/patch-recipe.dto";
 
 @Controller("recipes")
 export class RecipesController {
   constructor(private readonly recipesService: RecipesService) {}
 
   @Get()
-  getRecipes() {
+  findAll() {
     return this.recipesService.findAll();
   }
 
   @Get(":id")
-  getRecipeById(@Param("id", ParseUUIDPipe) id: string) {
-    return this.recipesService.findById(id);
+  findOne(@Param("id", ParseUUIDPipe) id: string) {
+    return this.recipesService.findOne(id);
   }
 
   @Post()
-  createRecipe(@Body() createRecipeDto: CreateRecipeDto) {
+  create(@Body() createRecipeDto: CreateRecipeDto) {
     return this.recipesService.create(createRecipeDto);
   }
 
   @Put(":id")
-  updateRecipe(
+  update(
     @Param("id", ParseUUIDPipe) id: string,
     @Body() updateRecipeDto: UpdateRecipeDto,
   ) {
-    return this.recipesService.editRecipe(id, updateRecipeDto);
+    return this.recipesService.update(id, updateRecipeDto);
   }
 
   @Patch(":id")
-  patchRecipe(
+  partialUpdate(
     @Param("id", ParseUUIDPipe) id: string,
-    @Body() patchRecipeDto: UpdateRecipeDto,
+    @Body() patchRecipeDto: PatchRecipeDto,
   ) {
-    return this.recipesService.patchRecipe(id, patchRecipeDto);
+    return this.recipesService.partialUpdate(id, patchRecipeDto);
   }
 
   @Delete(":id")
-  deleteRecipe(@Param("id", ParseUUIDPipe) id: string) {
-    return this.recipesService.deleteRecipe(id);
+  remove(@Param("id", ParseUUIDPipe) id: string) {
+    return this.recipesService.remove(id);
   }
 }

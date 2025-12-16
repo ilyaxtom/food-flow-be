@@ -1,9 +1,10 @@
 import { Injectable, NotFoundException } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
 import { Repository } from "typeorm";
-import { Recipe } from "typeorm/entities/Recipe";
-import { ICreateRecipe } from "recipes/types/CreateRecipe.types";
-import { IUpdateRecipe } from "recipes/types/UpdateRecipe.types";
+import { Recipe } from "recipes/entities/Recipe";
+import { CreateRecipeDto } from "recipes/dto/create-recipe.dto";
+import { UpdateRecipeDto } from "recipes/dto/update-recipe.dto";
+import { PatchRecipeDto } from "recipes/dto/patch-recipe.dto";
 
 @Injectable()
 export class RecipesService {
@@ -15,35 +16,53 @@ export class RecipesService {
     return await this.recipesRepository.find();
   }
 
-  async findById(id: string) {
+  async findOne(id: string) {
     const recipe = await this.recipesRepository.findOne({ where: { id } });
 
     if (!recipe) {
-      throw new NotFoundException();
+      throw new NotFoundException(`Recipe with ID ${id} not found`);
     }
 
     return recipe;
   }
 
-  async create(recipe: ICreateRecipe) {
+  async create(recipe: CreateRecipeDto) {
     const newRecipe = this.recipesRepository.create(recipe);
 
     return await this.recipesRepository.save(newRecipe);
   }
 
-  async editRecipe(id: string, recipeDto: IUpdateRecipe) {
-    return await this.recipesRepository.update(id, recipeDto);
+  async update(id: string, recipeDto: UpdateRecipeDto) {
+    const recipe = await this.recipesRepository.preload({
+      id,
+      ...recipeDto,
+    });
+
+    if (!recipe) {
+      throw new NotFoundException(`Recipe with ID ${id} not found`);
+    }
+
+    return await this.recipesRepository.save(recipe);
   }
 
-  async patchRecipe(id: string, recipeDto: IUpdateRecipe) {
-    return await this.recipesRepository.update(id, recipeDto);
+  async partialUpdate(id: string, recipeDto: PatchRecipeDto) {
+    const recipe = await this.recipesRepository.preload({
+      id,
+      ...recipeDto,
+    });
+
+    if (!recipe) {
+      throw new NotFoundException(`Recipe with ID ${id} not found`);
+    }
+
+    return await this.recipesRepository.save(recipe);
   }
 
-  async deleteRecipe(id: string) {
+  async remove(id: string) {
     const deleteResult = await this.recipesRepository.delete(id);
 
     if (!deleteResult.affected) {
-      throw new NotFoundException("No Recipe found to delete");
+      throw new NotFoundException(`Recipe with ID ${id} not found`);
     }
 
     return "Recipe was deleted";
