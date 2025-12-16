@@ -22,8 +22,13 @@ services:
     image: dpage/pgadmin4
     env_file:
       - .env
+    environment:
+      PGADMIN_DEFAULT_EMAIL: ${PGADMIN_DEFAULT_EMAIL}
+      PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_DEFAULT_PASSWORD}
     ports:
       - "8080:80"
+    volumes:
+      - "./servers.json:/pgadmin4/servers.json"
     depends_on:
       - db
 
@@ -37,10 +42,11 @@ services:
       - "3000:3000"
     volumes:
       - ".:/usr/src/app"
-      - "/usr/src/app/node_modules"
+      - "node_modules:/usr/src/app/node_modules"
     depends_on:
       db:
         condition: service_healthy
 
 volumes:
   food-flow-data:
+  node_modules:
