@@ -1,10 +1,20 @@
-import { Injectable, NotFoundException } from "@nestjs/common";
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+} from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
 import { Repository } from "typeorm";
+import { PageDto } from "shared/dto/page.dto";
+import { PageMetaDto } from "shared/dto/page-meta.dto";
 import { Recipe } from "recipes/entities/Recipe";
 import { CreateRecipeDto } from "recipes/dto/create-recipe.dto";
 import { UpdateRecipeDto } from "recipes/dto/update-recipe.dto";
 import { PatchRecipeDto } from "recipes/dto/patch-recipe.dto";
+import {
+  RECIPE_SORTABLE_FIELDS,
+  RecipePageOptionsDto,
+} from "recipes/dto/recipe-page-options.dto";
 
 @Injectable()
 export class RecipesService {
@@ -12,8 +22,30 @@ export class RecipesService {
     @InjectRepository(Recipe) private recipesRepository: Repository<Recipe>,
   ) {}
 
-  async findAll() {
-    return await this.recipesRepository.find();
+  async findAll(pageOptionsDto: RecipePageOptionsDto) {
+    const { page, limit, sortBy, order } = pageOptionsDto;
+
+    const sortField = RECIPE_SORTABLE_FIELDS.includes(sortBy)
+      ? sortBy
+      : "created_at";
+
+    const [items, itemsCount] = await this.recipesRepository.findAndCount({
+      skip: (page - 1) * limit,
+      take: limit,
+      order: {
+        [sortField]: order,
+      },
+    });
+
+    const pageMeta = new PageMetaDto({ pageOptionsDto, itemsCount });
+
+    if (page > pageMeta.pageCount) {
+      throw new BadRequestException(
+        "Page number exceeded total pages available",
+      );
+    }
+
+    return new PageDto(items, pageMeta);
   }
 
   async findOne(id: string) {

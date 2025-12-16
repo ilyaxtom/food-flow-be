@@ -8,19 +8,21 @@ import {
   Patch,
   Post,
   Put,
+  Query,
 } from "@nestjs/common";
 import { RecipesService } from "recipes/services/recipes.service";
 import { CreateRecipeDto } from "recipes/dto/create-recipe.dto";
 import { UpdateRecipeDto } from "recipes/dto/update-recipe.dto";
 import { PatchRecipeDto } from "recipes/dto/patch-recipe.dto";
+import { RecipePageOptionsDto } from "recipes/dto/recipe-page-options.dto";
 
 @Controller("recipes")
 export class RecipesController {
   constructor(private readonly recipesService: RecipesService) {}
 
   @Get()
-  findAll() {
-    return this.recipesService.findAll();
+  findAll(@Query() paginationDto: RecipePageOptionsDto) {
+    return this.recipesService.findAll(paginationDto);
   }
 
   @Get(":id")
