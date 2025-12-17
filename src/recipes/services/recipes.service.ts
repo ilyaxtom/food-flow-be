@@ -5,6 +5,7 @@ import {
 } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
 import { Repository } from "typeorm";
+import { CloudinaryService } from "cloudinary/services/cloudinary.service";
 import { PageDto } from "shared/dto/page.dto";
 import { PageMetaDto } from "shared/dto/page-meta.dto";
 import { Recipe } from "recipes/entities/Recipe";
@@ -20,6 +21,7 @@ import {
 export class RecipesService {
   constructor(
     @InjectRepository(Recipe) private recipesRepository: Repository<Recipe>,
+    private cloudinaryService: CloudinaryService,
   ) {}
 
   async findAll(pageOptionsDto: RecipePageOptionsDto) {
@@ -58,15 +60,35 @@ export class RecipesService {
     return recipe;
   }
 
-  async create(recipe: CreateRecipeDto) {
-    const newRecipe = this.recipesRepository.create(recipe);
+  async create(recipe: CreateRecipeDto, recipeCover: Express.Multer.File) {
+    if (!recipeCover) {
+      throw new BadRequestException("Recipe cover image is required");
+    }
+
+    const image_url = await this.cloudinaryService.uploadImage(recipeCover);
+
+    const newRecipe = this.recipesRepository.create({
+      ...recipe,
+      image_url,
+    });
 
     return await this.recipesRepository.save(newRecipe);
   }
 
-  async update(id: string, recipeDto: UpdateRecipeDto) {
+  async update(
+    id: string,
+    recipeDto: UpdateRecipeDto,
+    recipeCover: Express.Multer.File,
+  ) {
+    if (!recipeCover) {
+      throw new BadRequestException("Recipe cover image is required");
+    }
+
+    const image_url = await this.cloudinaryService.uploadImage(recipeCover);
+
     const recipe = await this.recipesRepository.preload({
       id,
+      image_url,
       ...recipeDto,
     });
 
@@ -77,10 +99,20 @@ export class RecipesService {
     return await this.recipesRepository.save(recipe);
   }
 
-  async partialUpdate(id: string, recipeDto: PatchRecipeDto) {
+  async partialUpdate(
+    id: string,
+    recipeDto: PatchRecipeDto,
+    recipeCover: Express.Multer.File,
+  ) {
+    const updates: Partial<Recipe> = { ...recipeDto };
+
+    if (recipeCover) {
+      updates.image_url = await this.cloudinaryService.uploadImage(recipeCover);
+    }
+
     const recipe = await this.recipesRepository.preload({
       id,
-      ...recipeDto,
+      ...updates,
     });
 
     if (!recipe) {

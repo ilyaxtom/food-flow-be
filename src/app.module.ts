@@ -2,6 +2,7 @@ import { Module } from "@nestjs/common";
 import { TypeOrmModule } from "@nestjs/typeorm";
 import { RecipesModule } from "recipes/recipes.module";
 import { Recipe } from "recipes/entities/Recipe";
+import { CloudinaryModule } from './cloudinary/cloudinary.module';
 
 @Module({
   imports: [
@@ -16,6 +17,7 @@ import { Recipe } from "recipes/entities/Recipe";
       entities: [Recipe],
       synchronize: true,
     }),
+    CloudinaryModule,
   ],
   controllers: [],
   providers: [],

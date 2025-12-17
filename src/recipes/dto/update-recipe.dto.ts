@@ -6,9 +6,10 @@ import {
   Max,
   ArrayNotEmpty,
   ValidateNested,
+  IsInt,
 } from "class-validator";
 import { CookingStepDto } from "./cooking-step.dto";
-import { Type } from "class-transformer";
+import { Transform, Type } from "class-transformer";
 
 export class UpdateRecipeDto {
   @IsNotEmpty()
@@ -19,20 +20,20 @@ export class UpdateRecipeDto {
   @MaxLength(255)
   subtitle: string;
 
-  @IsNotEmpty()
-  image_url: string;
-
-  @IsNumber()
+  @Type(() => Number)
+  @IsInt()
   @Min(1)
   cooking_time: number;
 
-  @IsNumber()
+  @Type(() => Number)
+  @IsInt()
   @Min(1)
   @Max(5)
   difficulty_level: number;
 
+  @Transform(({ value }) => JSON.parse(value))
+  @Type(() => CookingStepDto)
   @ArrayNotEmpty()
   @ValidateNested({ each: true })
-  @Type(() => CookingStepDto)
   cooking: CookingStepDto[];
 }
