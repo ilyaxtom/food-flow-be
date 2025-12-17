@@ -4,7 +4,6 @@ import {
   Delete,
   Get,
   Param,
-  ParseUUIDPipe,
   Patch,
   Post,
   Put,
@@ -30,9 +29,9 @@ export class RecipesController {
     return this.recipesService.findAll(paginationDto);
   }
 
-  @Get(":id")
-  findOne(@Param("id", ParseUUIDPipe) id: string) {
-    return this.recipesService.findOne(id);
+  @Get(":slug")
+  findOne(@Param("slug") slug: string) {
+    return this.recipesService.findOne(slug);
   }
 
   @Post()
@@ -46,32 +45,32 @@ export class RecipesController {
     return this.recipesService.create(createRecipeDto, file);
   }
 
-  @Put(":id")
+  @Put(":slug")
   @UseInterceptors(
     FileInterceptor("recipe_cover", { limits: { fileSize: 5 * 1024 * 1024 } }),
   )
   update(
-    @Param("id", ParseUUIDPipe) id: string,
+    @Param("slug") slug: string,
     @UploadedFile(ValidateImagePipe) file: Express.Multer.File,
     @Body() updateRecipeDto: UpdateRecipeDto,
   ) {
-    return this.recipesService.update(id, updateRecipeDto, file);
+    return this.recipesService.update(slug, updateRecipeDto, file);
   }
 
-  @Patch(":id")
+  @Patch(":slug")
   @UseInterceptors(
     FileInterceptor("recipe_cover", { limits: { fileSize: 5 * 1024 * 1024 } }),
   )
   partialUpdate(
-    @Param("id", ParseUUIDPipe) id: string,
+    @Param("slug") slug: string,
     @UploadedFile() file: Express.Multer.File,
     @Body() patchRecipeDto: PatchRecipeDto,
   ) {
-    return this.recipesService.partialUpdate(id, patchRecipeDto, file);
+    return this.recipesService.partialUpdate(slug, patchRecipeDto, file);
   }
 
-  @Delete(":id")
-  remove(@Param("id", ParseUUIDPipe) id: string) {
-    return this.recipesService.remove(id);
+  @Delete(":slug")
+  remove(@Param("slug") slug: string) {
+    return this.recipesService.remove(slug);
   }
 }

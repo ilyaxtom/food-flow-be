@@ -5,6 +5,8 @@ import {
 } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
 import { Repository } from "typeorm";
+import { nanoid } from "nanoid";
+import slugify from "slugify";
 import { CloudinaryService } from "cloudinary/services/cloudinary.service";
 import { PageDto } from "shared/dto/page.dto";
 import { PageMetaDto } from "shared/dto/page-meta.dto";
@@ -50,11 +52,11 @@ export class RecipesService {
     return new PageDto(items, pageMeta);
   }
 
-  async findOne(id: string) {
-    const recipe = await this.recipesRepository.findOne({ where: { id } });
+  async findOne(slug: string) {
+    const recipe = await this.recipesRepository.findOne({ where: { slug } });
 
     if (!recipe) {
-      throw new NotFoundException(`Recipe with ID ${id} not found`);
+      throw new NotFoundException(`Recipe with slug ${slug} not found`);
     }
 
     return recipe;
@@ -67,16 +69,19 @@ export class RecipesService {
 
     const image_url = await this.cloudinaryService.uploadImage(recipeCover);
 
+    const baseSlug = slugify(recipe.title, { lower: true, strict: true });
+
     const newRecipe = this.recipesRepository.create({
       ...recipe,
       image_url,
+      slug: `${baseSlug}-${nanoid(6)}`,
     });
 
     return await this.recipesRepository.save(newRecipe);
   }
 
   async update(
-    id: string,
+    slug: string,
     recipeDto: UpdateRecipeDto,
     recipeCover: Express.Multer.File,
   ) {
@@ -86,47 +91,47 @@ export class RecipesService {
 
     const image_url = await this.cloudinaryService.uploadImage(recipeCover);
 
-    const recipe = await this.recipesRepository.preload({
-      id,
-      image_url,
-      ...recipeDto,
-    });
+    const recipe = await this.recipesRepository.findOneBy({ slug });
 
     if (!recipe) {
-      throw new NotFoundException(`Recipe with ID ${id} not found`);
+      throw new NotFoundException(`Recipe with slug ${slug} not found`);
     }
+
+    Object.assign(recipe, {
+      ...recipeDto,
+      image_url,
+    });
 
     return await this.recipesRepository.save(recipe);
   }
 
   async partialUpdate(
-    id: string,
+    slug: string,
     recipeDto: PatchRecipeDto,
     recipeCover: Express.Multer.File,
   ) {
+    const recipe = await this.recipesRepository.findOneBy({ slug });
+
+    if (!recipe) {
+      throw new NotFoundException(`Recipe with slug ${slug} not found`);
+    }
+
     const updates: Partial<Recipe> = { ...recipeDto };
 
     if (recipeCover) {
       updates.image_url = await this.cloudinaryService.uploadImage(recipeCover);
     }
 
-    const recipe = await this.recipesRepository.preload({
-      id,
-      ...updates,
-    });
-
-    if (!recipe) {
-      throw new NotFoundException(`Recipe with ID ${id} not found`);
-    }
+    Object.assign(recipe, updates);
 
     return await this.recipesRepository.save(recipe);
   }
 
-  async remove(id: string) {
-    const deleteResult = await this.recipesRepository.delete(id);
+  async remove(slug: string) {
+    const deleteResult = await this.recipesRepository.delete({ slug });
 
     if (!deleteResult.affected) {
-      throw new NotFoundException(`Recipe with ID ${id} not found`);
+      throw new NotFoundException(`Recipe with ID ${slug} not found`);
     }
 
     return "Recipe was deleted";

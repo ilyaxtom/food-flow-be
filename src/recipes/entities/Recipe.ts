@@ -1,4 +1,10 @@
-import { Column, Entity, PrimaryGeneratedColumn } from "typeorm";
+import {
+  BeforeInsert,
+  BeforeUpdate,
+  Column,
+  Entity,
+  PrimaryGeneratedColumn,
+} from "typeorm";
 import { CookingStepDto } from "recipes/dto/cooking-step.dto";
 
 @Entity({ name: "recipes" })
@@ -20,6 +26,9 @@ export class Recipe {
 
   @Column({ type: "int" })
   difficulty_level: number;
+
+  @Column({ unique: true })
+  slug: string;
 
   @Column({ type: "jsonb" })
   cooking: CookingStepDto[];
