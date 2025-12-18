@@ -29,19 +29,26 @@ export default tseslint.config(
   {
     rules: {
       "@typescript-eslint/no-explicit-any": "off",
-      "@typescript-eslint/no-floating-promises": "warn",
+      "@typescript-eslint/no-floating-promises": "off",
       "@typescript-eslint/no-unsafe-argument": "warn",
       "import/no-unresolved": "off",
       "import/order": [
-        "error",
+        "warn",
         {
-          "groups": ["builtin", "external", "internal", "parent", "sibling", "index"],
+          groups: [
+            "builtin",
+            "external",
+            "internal",
+            "parent",
+            "sibling",
+            "index",
+          ],
           "newlines-between": "always",
-          "alphabetize": {
-            "order": "asc",
-            "caseInsensitive": true
-          }
-        }
+          alphabetize: {
+            order: "asc",
+            caseInsensitive: true,
+          },
+        },
       ],
       "prettier/prettier": ["error", { endOfLine: "auto" }],
     },

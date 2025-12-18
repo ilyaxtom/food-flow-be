@@ -1,10 +1,4 @@
-import {
-  BeforeInsert,
-  BeforeUpdate,
-  Column,
-  Entity,
-  PrimaryGeneratedColumn,
-} from "typeorm";
+import { Column, Entity, PrimaryGeneratedColumn } from "typeorm";
 import { CookingStepDto } from "recipes/dto/cooking-step.dto";
 
 @Entity({ name: "recipes" })
@@ -20,6 +14,9 @@ export class Recipe {
 
   @Column()
   image_url: string;
+
+  @Column()
+  image_public_id: string;
 
   @Column({ type: "int" })
   cooking_time: number;

@@ -26,6 +26,16 @@ export class RecipesService {
     private cloudinaryService: CloudinaryService,
   ) {}
 
+  private async replaceImage(recipe: Recipe, file: Express.Multer.File) {
+    const upload = await this.cloudinaryService.uploadImage(file);
+    const oldPublicId = recipe.image_public_id;
+
+    Object.assign(recipe, upload);
+
+    await this.recipesRepository.save(recipe);
+    await this.cloudinaryService.deleteImage(oldPublicId);
+  }
+
   async findAll(pageOptionsDto: RecipePageOptionsDto) {
     const { page, limit, sortBy, order } = pageOptionsDto;
 
@@ -67,13 +77,13 @@ export class RecipesService {
       throw new BadRequestException("Recipe cover image is required");
     }
 
-    const image_url = await this.cloudinaryService.uploadImage(recipeCover);
+    const imageUpload = await this.cloudinaryService.uploadImage(recipeCover);
 
     const baseSlug = slugify(recipe.title, { lower: true, strict: true });
 
     const newRecipe = this.recipesRepository.create({
       ...recipe,
-      image_url,
+      ...imageUpload,
       slug: `${baseSlug}-${nanoid(6)}`,
     });
 
@@ -89,17 +99,16 @@ export class RecipesService {
       throw new BadRequestException("Recipe cover image is required");
     }
 
-    const image_url = await this.cloudinaryService.uploadImage(recipeCover);
-
     const recipe = await this.recipesRepository.findOneBy({ slug });
 
     if (!recipe) {
       throw new NotFoundException(`Recipe with slug ${slug} not found`);
     }
 
+    await this.replaceImage(recipe, recipeCover);
+
     Object.assign(recipe, {
       ...recipeDto,
-      image_url,
     });
 
     return await this.recipesRepository.save(recipe);
@@ -119,20 +128,24 @@ export class RecipesService {
     const updates: Partial<Recipe> = { ...recipeDto };
 
     if (recipeCover) {
-      updates.image_url = await this.cloudinaryService.uploadImage(recipeCover);
+      await this.replaceImage(recipe, recipeCover);
     }
 
     Object.assign(recipe, updates);
 
-    return await this.recipesRepository.save(recipe);
+    await this.recipesRepository.save(recipe);
   }
 
   async remove(slug: string) {
-    const deleteResult = await this.recipesRepository.delete({ slug });
+    const recipe = await this.recipesRepository.findOneBy({ slug });
 
-    if (!deleteResult.affected) {
-      throw new NotFoundException(`Recipe with ID ${slug} not found`);
+    if (!recipe) {
+      throw new NotFoundException(`Recipe with slug ${slug} not found`);
     }
+
+    await this.cloudinaryService.deleteImage(recipe.image_public_id);
+
+    await this.recipesRepository.delete(recipe.id);
 
     return "Recipe was deleted";
   }
